@@ -1,0 +1,9 @@
+node_modules
+data64/db2/indexes
+data64/db2/jit
+data64/keyring
+data100/db2/indexes
+data100/db2/jit
+data100/keyring
+data1020
+pnpm-lock.yaml
