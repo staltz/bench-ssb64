@@ -82,11 +82,13 @@ const config = makeConfig('ssb', {
 
 const ssb = SecretStack()
   .use(require('ssb-master'))
-  .use(require('./memdb'))
+  .use(require('ssb-memdb'))
+  .use(require('ssb-classic'))
+  .use(require('ssb-box'))
   .call(null, config);
 
 (async function main() {
-  await ssb.db.onDone();
+  await ssb.db.loaded();
   logMem();
   const end = Date.now();
   console.log('Startup:', end - start, 'ms');
@@ -94,22 +96,19 @@ const ssb = SecretStack()
   // Scan the entire in-memory log
   {
     const start = Date.now();
-    await pull(
-      ssb.db.filterBy((msg) => true),
-      onEndAsPromise(),
-    );
+    let i = 0;
+    ssb.db.forEach((msg) => {
+      i = 1 - i;
+    });
     const end = Date.now();
     console.log('Naked query:', end - start, 'ms');
   }
 
+  // Query all my posts
   {
     const start = Date.now();
-    const myPosts = await pull(
-      ssb.db.filterBy(
-        (msg) =>
-          msg.value.author === ssb.id && msg.value.content.type === 'post',
-      ),
-      pull.collectAsPromise(),
+    const myPosts = ssb.db.filterAsArray(
+      (msg) => msg.value.author === ssb.id && msg.value.content.type === 'post',
     );
     const end = Date.now();
     // console.log(myPosts);
@@ -121,19 +120,17 @@ const ssb = SecretStack()
     const targetName = 'et';
     const found = new Map();
     const start = Date.now();
-    await pull(
-      ssb.db.filterBy(
-        (msg) =>
-          msg?.value?.content?.type === 'about' &&
-          msg.value.content.about === msg.value.author &&
-          typeof msg.value.content.name === 'string' &&
-          (msg.value.content.name === targetName ||
-            msg.value.content.name?.startsWith(targetName)),
-      ),
-      drainAsPromise((msg) => {
+    ssb.db.forEach((msg) => {
+      if (
+        msg?.value?.content?.type === 'about' &&
+        msg.value.content.about === msg.value.author &&
+        typeof msg.value.content.name === 'string' &&
+        (msg.value.content.name === targetName ||
+          msg.value.content.name?.startsWith(targetName))
+      ) {
         found.set(msg.value.author, msg.value.content.name);
-      }),
-    );
+      }
+    });
     const end = Date.now();
     console.log('Search profile names:', end - start, 'ms');
   }
@@ -142,20 +139,18 @@ const ssb = SecretStack()
   {
     const start = Date.now();
     const followlist = new Set();
-    await pull(
-      ssb.db.filterBy(
-        (msg) =>
-          msg?.value?.content?.type === 'contact' &&
-          msg.value.author === ssb.id &&
-          msg.value.content.contact !== ssb.id,
-      ),
-      drainAsPromise((msg) => {
+    ssb.db.forEach((msg) => {
+      if (
+        msg?.value?.content?.type === 'contact' &&
+        msg.value.author === ssb.id &&
+        msg.value.content.contact !== ssb.id
+      ) {
         const {contact, following, blocking} = msg.value.content;
         if (following) followlist.add(contact);
         else if (!following) followlist.delete(contact);
         else if (blocking) followlist.delete(contact);
-      }),
-    );
+      }
+    });
     const end = Date.now();
     // console.log(followlist);
     console.log('Collect followlist:', end - start, 'ms');
@@ -165,20 +160,18 @@ const ssb = SecretStack()
   {
     const start = Date.now();
     const profile = {};
-    await pull(
-      ssb.db.filterBy(
-        (msg) =>
-          msg?.value?.content?.type === 'about' &&
-          msg.value.author === ssb.id &&
-          msg.value.content.about === ssb.id,
-      ),
-      drainAsPromise((msg) => {
+    ssb.db.forEach((msg) => {
+      if (
+        msg?.value?.content?.type === 'about' &&
+        msg.value.author === ssb.id &&
+        msg.value.content.about === ssb.id
+      ) {
         const {name, description, image} = msg.value.content;
         if (name) profile.name = name;
         if (description) profile.description = description;
         if (image) profile.image = image;
-      }),
-    );
+      }
+    });
     const end = Date.now();
     // console.log(profile);
     console.log('Collect my profile:', end - start, 'ms');
@@ -189,7 +182,7 @@ const ssb = SecretStack()
     const start = Date.now();
     const mentions = [];
     await pull(
-      ssb.db.filterBy((msg) =>
+      ssb.db.filterAsPullStream((msg) =>
         msg?.value?.content?.mentions?.some(
           (mention) => mention.link === ssb.id,
         ),
@@ -208,13 +201,10 @@ const ssb = SecretStack()
   {
     const start = Date.now();
     const sizes = new Map();
-    await pull(
-      ssb.db.filterBy((msg) => true),
-      drainAsPromise((msg) => {
-        const size = sizes.get(msg.value.author) || 0;
-        sizes.set(msg.value.author, size + msg.meta.size);
-      }),
-    );
+    ssb.db.forEach((msg) => {
+      const size = sizes.get(msg.value.author) || 0;
+      sizes.set(msg.value.author, size + msg.meta.size);
+    });
     const end = Date.now();
     // console.log(sizes);
     console.log('Calculate sizes of all feeds:', end - start, 'ms');
