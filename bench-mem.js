@@ -114,7 +114,7 @@ const ssb = SecretStack()
       (msg) => msg.value.author === ssb.id && msg.value.content.type === 'post',
     );
     const end = Date.now();
-    // console.log(myPosts);
+    // console.log(myPosts.map(msg => JSON.stringify(msg, null, 2)).join('\n\n'));
     console.log('Query all my posts:', end - start, 'ms');
   }
 
