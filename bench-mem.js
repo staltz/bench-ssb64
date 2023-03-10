@@ -200,7 +200,7 @@ const ssb = SecretStack()
       }),
     );
     const end = Date.now();
-    // console.log(mentions.map((msg) => JSON.stringify(msg, null, 2)));
+    // console.log(mentions.map((msg) => JSON.stringify(msg, null, 2)).join('\n\n'));
     console.log('Collect 100 posts that mention me:', end - start, 'ms');
   }
 
