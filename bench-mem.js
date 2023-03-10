@@ -4,6 +4,7 @@ const caps = require('ssb-caps');
 const ssbKeys = require('ssb-keys');
 const makeConfig = require('ssb-config/inject');
 const SecretStack = require('secret-stack');
+const p = require('util').promisify;
 const {logMem} = require('micro-bmark').utils;
 
 const DATASET = 'data64';
@@ -95,6 +96,7 @@ const ssb = SecretStack()
 
   // Scan the entire in-memory log
   {
+    await p(setTimeout)(500);
     const start = Date.now();
     let i = 0;
     ssb.db.forEach((msg) => {
@@ -106,6 +108,7 @@ const ssb = SecretStack()
 
   // Query all my posts
   {
+    await p(setTimeout)(500);
     const start = Date.now();
     const myPosts = ssb.db.filterAsArray(
       (msg) => msg.value.author === ssb.id && msg.value.content.type === 'post',
@@ -117,6 +120,7 @@ const ssb = SecretStack()
 
   // ssb-suggest-lite simulation
   {
+    await p(setTimeout)(500);
     const targetName = 'et';
     const found = new Map();
     const start = Date.now();
@@ -137,6 +141,7 @@ const ssb = SecretStack()
 
   // Query my followlist
   {
+    await p(setTimeout)(500);
     const start = Date.now();
     const followlist = new Set();
     ssb.db.forEach((msg) => {
@@ -158,6 +163,7 @@ const ssb = SecretStack()
 
   // Query my profile details
   {
+    await p(setTimeout)(500);
     const start = Date.now();
     const profile = {};
     ssb.db.forEach((msg) => {
@@ -179,6 +185,7 @@ const ssb = SecretStack()
 
   // Query 100 mentions
   {
+    await p(setTimeout)(500);
     const start = Date.now();
     const mentions = [];
     await pull(
@@ -199,6 +206,7 @@ const ssb = SecretStack()
 
   // Calculate sizes of all feeds
   {
+    await p(setTimeout)(500);
     const start = Date.now();
     const sizes = new Map();
     ssb.db.forEach((msg) => {

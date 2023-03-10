@@ -74,6 +74,7 @@ pull(
 
     // jitdb
     {
+      await p(setTimeout)(500);
       const start = Date.now();
       const myPosts = await ssb.db.query(
         where(and(type('post'), author(ssb.id, {dedicated: true}))),
@@ -86,6 +87,7 @@ pull(
 
     // ssb-suggest-list
     {
+      await p(setTimeout)(500);
       const text = 'et';
       const start = Date.now();
       const found = await promisify(ssb.suggest.profile)({text});
@@ -96,6 +98,7 @@ pull(
 
     // Query my followlist
     {
+      await p(setTimeout)(500);
       const start = Date.now();
       const follows = await promisify(ssb.friends.hops)({
         start: ssb.id,
@@ -108,6 +111,7 @@ pull(
 
     // Query my profile details
     {
+      await p(setTimeout)(500);
       const start = Date.now();
       const profile = await promisify(ssb.aboutSelf.get)(ssb.id);
       const end = Date.now();
@@ -117,6 +121,7 @@ pull(
 
     // Query 100 mentions
     {
+      await p(setTimeout)(500);
       const start = Date.now();
       const arr = await pull(
         ssb.db.query(where(mentions(ssb.id)), toPullStream()),
@@ -130,6 +135,7 @@ pull(
 
     // Calculate size of all feeds
     {
+      await p(setTimeout)(500);
       const start = Date.now();
       const arr = await pull(ssb.storageUsed.stream(), pull.collectAsPromise());
       const end = Date.now();
